@@ -7,18 +7,18 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="eureka-server" />
-        <module name="gateway" />
+        <module name="interview-service" />
+        <module name="gateway-service" />
       </profile>
-      <profile name="Annotation profile for report-service" enabled="true">
+      <profile name="Annotation profile for auth-service" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="false">
-          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/unknown/lombok-unknown.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.42/lombok-1.18.42.jar" />
         </processorPath>
-        <module name="interview-service" />
-        <module name="report-service" />
         <module name="auth-service" />
+        <module name="report-service" />
       </profile>
     </annotationProcessing>
   </component>
@@ -26,7 +26,7 @@
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="auth-service" options="-parameters" />
       <module name="eureka-server" options="-parameters" />
-      <module name="gateway" options="-parameters" />
+      <module name="gateway-service" options="-parameters" />
       <module name="interview-service" options="-parameters" />
       <module name="report-service" options="-parameters" />
     </option>

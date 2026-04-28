@@ -1,0 +1,35 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: auth-service
+
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:5432/auth_service_db
+    username: postgres
+    password: postgres
+
+  flyway:
+    url: jdbc:postgresql://127.0.0.1:5432/auth_service_db
+    user: postgres
+    password: postgres
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+auth:
+  jwt:
+    issuer: auth-service
+    secret: "secret Oleg-Olegovich key for you 58"
+    access-token-expiration-minutes: 15
+    refresh-token-expiration-days: 30
+
+logging:
+  level:
+    org.springframework.security: INFO

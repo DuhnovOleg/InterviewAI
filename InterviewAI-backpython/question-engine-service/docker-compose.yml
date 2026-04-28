@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  question-engine-service:
+    build: .
+    container_name: question-engine-service
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: question-engine-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:

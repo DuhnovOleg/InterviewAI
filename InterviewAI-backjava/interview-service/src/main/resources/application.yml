@@ -1,0 +1,55 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: interview-service
+
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:5432/interview_service_db
+    username: postgres
+    password: postgres
+
+  flyway:
+    url: jdbc:postgresql://127.0.0.1:5432/interview_service_db
+    user: postgres
+    password: postgres
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+clients:
+  question-engine:
+    base-url: http://localhost:8001
+  transcribe:
+    base-url: http://localhost:8002
+
+topics:
+  interview-started: interview.started
+  interview-answer-submitted: interview.answer.submitted
+  interview-completed: interview.completed
+  voice-answer-submitted: interview.voice.answer.submitted
+
+app:
+  guest:
+    session-ttl-minutes: 120
+
+logging:
+  level:
+    org.flywaydb: DEBUG
