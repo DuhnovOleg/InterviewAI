@@ -37,3 +37,6 @@ class InterviewSession(BaseModel):
     started_at: datetime
     current_question_started_at: Optional[datetime] = None
     awaiting_stop_confirmation: bool = False
+    planned_questions_count: int | None = None
+    follow_up_count: int = 0
+    max_follow_ups: int = 1

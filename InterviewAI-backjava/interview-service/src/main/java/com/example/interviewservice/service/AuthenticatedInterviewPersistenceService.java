@@ -70,6 +70,20 @@ public class AuthenticatedInterviewPersistenceService {
         answerRepository.save(entity);
     }
 
+    public java.util.List<java.util.Map<String, Object>> recentHistory(UUID userId) {
+        return sessionRepository.findTop10ByUserIdOrderByStartedAtDesc(userId).stream().map(session -> {
+            java.util.Map<String, Object> item = new java.util.LinkedHashMap<>();
+            item.put("sessionId", session.getId().toString());
+            item.put("profession", session.getProfession());
+            item.put("level", session.getLevel());
+            item.put("createdAt", session.getStartedAt() == null ? null : session.getStartedAt().toString());
+            var report = reportRepository.findByInterviewSessionId(session.getId()).orElse(null);
+            item.put("averageScore", report == null ? null : report.getOverallScore());
+            item.put("recommendation", report == null ? "" : report.getHireRecommendation());
+            return item;
+        }).toList();
+    }
+
     private BigDecimal toBigDecimal(Double value) {
         return value == null ? null : BigDecimal.valueOf(value);
     }
@@ -90,7 +104,8 @@ public class AuthenticatedInterviewPersistenceService {
     public void saveReport(UUID interviewSessionId, Object reportObject) {
         Map<String, Object> report = (Map<String, Object>) reportObject;
 
-        InterviewReportEntity entity = new InterviewReportEntity();
+        InterviewReportEntity entity = reportRepository.findByInterviewSessionId(interviewSessionId)
+                .orElseGet(InterviewReportEntity::new);
         entity.setInterviewSessionId(interviewSessionId);
         entity.setOverallScore(readBigDecimal(report.get("overall_score")));
         entity.setTechnicalScore(readBigDecimal(report.get("technical_score")));

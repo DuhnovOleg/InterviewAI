@@ -9,6 +9,8 @@ import com.example.interviewservice.service.InterviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/interviews")
@@ -40,6 +42,11 @@ public class InterviewController {
     @PostMapping("/stop")
     public SubmitAnswerResponse stopInterview(@Valid @RequestBody StopInterviewRequest request) {
         return interviewService.stopInterview(request);
+    }
+
+    @GetMapping("/history")
+    public List<Map<String, Object>> history() {
+        return interviewService.history();
     }
 
     @GetMapping("/{sessionId}")

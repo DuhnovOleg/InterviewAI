@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import router
 from app.core.config_transcribe import get_settings
+from app.services.transcribe_engine_registry import TranscribeEngineRegistry
 from app.services.whisper_service import WhisperService
 
 settings = get_settings()
@@ -13,7 +14,14 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.whisper_service = WhisperService(settings)
+    whisper_service = WhisperService(settings)
+
+    app.state.whisper_service = whisper_service
+    app.state.engine_registry = TranscribeEngineRegistry(
+        settings=settings,
+        whisper_service=whisper_service,
+    )
+
     yield
 
 

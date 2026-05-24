@@ -27,7 +27,7 @@ auth:
   jwt:
     issuer: auth-service
     secret: "secret Oleg-Olegovich key for you 58"
-    access-token-expiration-minutes: 15
+    access-token-expiration-minutes: 480
     refresh-token-expiration-days: 30
 
 logging:

@@ -1,0 +1,32 @@
+server:
+  port: 8084
+spring:
+  application:
+    name: assessment-service
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:5432/assessment_service_db
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+clients:
+  question-engine:
+    base-url: http://localhost:8001
+  transcribe:
+    base-url: http://localhost:8002
+  report:
+    base-url: http://localhost:8083
+app:
+  jwt:
+    secret: "secret key olegi"
+  public-base-url: http://localhost:5173
+  media-storage-dir: ./storage/assessment-media
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

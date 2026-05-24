@@ -3,6 +3,14 @@ from app.schemas.llm import AnswerAnalysis, UserIntentResult
 from app.utils.json_utils import extract_json_from_text
 
 
+def _clamp_score(value, default=0.0):
+    try:
+        number = float(value)
+    except Exception:
+        number = default
+    return max(0.0, min(10.0, number))
+
+
 class AnalysisService:
     def __init__(self, ollama_client: OllamaClient):
         self.ollama_client = ollama_client
@@ -94,6 +102,40 @@ class AnalysisService:
 - если answer correctness_score < 3, feedback не должен содержать фразы "в целом правильный"
 - не завышай оценку из вежливости
 
+КРИТИЧЕСКИЕ ПРАВИЛА ФОРМАТА:
+Верни только валидный JSON-объект.
+Не используй Markdown.
+Не используй ```json.
+Не добавляй текст до или после JSON.
+Все строковые значения должны быть в одну строку без настоящих переносов строк.
+Если нужно разделить мысли, используй обычные предложения через точку.
+Все кавычки внутри строк экранируй.
+Все числовые поля должны быть числами от 0 до 10.
+Не используй null для числовых полей.
+feedback должен быть одной строкой до 500 символов.
+strengths и weaknesses должны быть массивами коротких строк без переносов строк.
+
+КРИТИЧЕСКИЕ ПРАВИЛА ЯЗЫКА:
+Отвечай строго на русском языке.
+Не используй английский язык, китайский язык, иероглифы или смешанные фразы.
+Если модель не уверена, всё равно формируй ответ на русском.
+Запрещены фразы с китайскими символами, английскими вставками вроде "well", "very good", "correct".
+
+КРИТИЧЕСКИЕ ПРАВИЛА FOLLOW_UP:
+Если кандидат пишет "не знаю", "не могу", "не смогу", "не понимаю", "давай следующий вопрос", "следующий вопрос", "перейдем дальше", "пропустим", "хватит про это", тогда:
+- decision должен быть "NEXT";
+- follow_up_question должен быть null;
+- поставь низкую оценку за текущий ответ;
+- не задавай уточняющий вопрос по этой же теме.
+
+Если ответ нерелевантный, пустой или кандидат отказался отвечать:
+- decision = "NEXT";
+- follow_up_question = null.
+
+FOLLOW_UP разрешен только если кандидат дал частично правильный ответ и явно есть смысл уточнить одну деталь.
+Не задавай FOLLOW_UP, если кандидат уже явно не знает тему.
+Не повторяй тот же вопрос другими словами.
+
 Формат ответа:
 {{
   "overall_score": число,
@@ -115,14 +157,31 @@ class AnalysisService:
             raw = await self.ollama_client.generate(prompt, temperature=0.2)
             parsed = extract_json_from_text(raw)
 
+            score_fields = [
+                "overall_score",
+                "correctness_score",
+                "completeness_score",
+                "clarity_score",
+                "relevance_score",
+                "grammar_score",
+                "confidence_score",
+                "response_speed_score",
+            ]
+
             if parsed.get("confidence_score") is None:
                 parsed["confidence_score"] = confidence_score_from_audio or 0
 
             if parsed.get("response_speed_score") is None:
                 parsed["response_speed_score"] = 0 if response_time_seconds is None else 6.0
 
+            for field in score_fields:
+                parsed[field] = _clamp_score(parsed.get(field), default=0.0)
+
             if parsed.get("follow_up_question") in ("", "null"):
                 parsed["follow_up_question"] = None
+
+            if parsed.get("decision") not in ("NEXT", "FOLLOW_UP"):
+                parsed["decision"] = "NEXT"
 
             return AnswerAnalysis.model_validate(parsed)
 

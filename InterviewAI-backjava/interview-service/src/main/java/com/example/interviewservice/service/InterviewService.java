@@ -230,7 +230,7 @@ public class InterviewService {
 
         if (authenticated) {
             UUID localId = UUID.fromString(sessionId);
-            InterviewSessionEntity entity = persistenceService.findByPythonSessionId(localId.toString());
+            InterviewSessionEntity entity = persistenceService.findByLocalSessionId(localId);
             if (entity == null) {
                 throw new SessionNotFoundException("Interview session not found");
             }
@@ -252,6 +252,14 @@ public class InterviewService {
         }
 
         return response;
+    }
+
+    public java.util.List<java.util.Map<String, Object>> history() {
+        UUID userId = userContextService.getCurrentUserIdOrNull();
+        if (userId == null) {
+            return java.util.List.of();
+        }
+        return persistenceService.recentHistory(userId);
     }
 
     public SubmitAnswerResponse stopInterview(StopInterviewRequest request) {

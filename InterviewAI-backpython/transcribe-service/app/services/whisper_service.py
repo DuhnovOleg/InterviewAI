@@ -1,6 +1,6 @@
 from faster_whisper import WhisperModel
 
-from app.core.config import Settings
+from app.core.config_transcribe import Settings
 
 
 class WhisperService:

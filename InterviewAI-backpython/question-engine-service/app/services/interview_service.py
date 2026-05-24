@@ -51,6 +51,33 @@ class InterviewService:
         "no",
     ]
 
+    NEXT_QUESTION_KEYWORDS = [
+        "следующий вопрос",
+        "давай следующий",
+        "давай следующий вопрос",
+        "перейдем дальше",
+        "переходим дальше",
+        "давай дальше",
+        "дальше",
+        "пропустим",
+        "пропустить",
+        "хватит про это",
+        "достаточно по этой теме",
+    ]
+
+    UNKNOWN_ANSWER_KEYWORDS = [
+        "не знаю",
+        "я не знаю",
+        "не могу ответить",
+        "не могу объяснить",
+        "не смогу ответить",
+        "не смогу объяснить",
+        "не понимаю",
+        "не помню",
+        "затрудняюсь",
+        "хз",
+    ]
+
     def __init__(
         self,
         store: InMemorySessionStore,
@@ -76,6 +103,9 @@ class InterviewService:
             profession=parsed.profession,
             level=parsed.level,
             questions=questions,
+            planned_questions_count=parsed.num_questions,
+            max_follow_ups=1,
+            follow_up_count=0,
             original_message=message,
             started_at=datetime.utcnow(),
             current_question_started_at=datetime.utcnow(),
@@ -92,10 +122,47 @@ class InterviewService:
         normalized = self._normalize_text(text)
         return any(phrase in normalized for phrase in phrases)
 
+    def _is_next_question_request(self, text: str) -> bool:
+        return self._contains_any_phrase(text, self.NEXT_QUESTION_KEYWORDS)
+
+    def _is_unknown_answer(self, text: str) -> bool:
+        return self._contains_any_phrase(text, self.UNKNOWN_ANSWER_KEYWORDS)
+
+    def _should_allow_follow_up(
+            self,
+            session: InterviewSession,
+            answer: str,
+            analysis,
+    ) -> bool:
+        if analysis.decision != "FOLLOW_UP":
+            return False
+
+        if not analysis.follow_up_question:
+            return False
+
+        if self._is_unknown_answer(answer):
+            return False
+
+        if self._is_next_question_request(answer):
+            return False
+
+        if getattr(session, "follow_up_count", 0) >= getattr(session, "max_follow_ups", 1):
+            return False
+
+        current_question = session.questions[session.current_index].lower()
+        follow_up_question = analysis.follow_up_question.lower()
+
+        if current_question.strip() == follow_up_question.strip():
+            return False
+
+        return True
+
     async def _detect_intent(self, session: InterviewSession, answer: str) -> str:
         normalized = self._normalize_text(answer)
 
         if session.awaiting_stop_confirmation:
+            if self._is_next_question_request(answer):
+                return "NEXT_QUESTION"
             if self._contains_any_phrase(normalized, self.CONFIRM_STOP_KEYWORDS):
                 return "CONFIRM_STOP"
             if self._contains_any_phrase(normalized, self.CANCEL_STOP_KEYWORDS):
@@ -126,7 +193,7 @@ class InterviewService:
             return self.complete_interview(session)
 
         intent = await self._detect_intent(session, answer)
-
+        force_next_question = intent == "NEXT_QUESTION" or self._is_unknown_answer(answer)
         if session.awaiting_stop_confirmation:
             if intent == "CONFIRM_STOP":
                 session.awaiting_stop_confirmation = False
@@ -218,8 +285,9 @@ class InterviewService:
             )
         )
 
-        if analysis.decision == "FOLLOW_UP" and analysis.follow_up_question:
+        if not force_next_question and self._should_allow_follow_up(session, answer, analysis):
             session.questions.insert(session.current_index + 1, analysis.follow_up_question)
+            session.follow_up_count = getattr(session, "follow_up_count", 0) + 1
 
         session.current_index += 1
         session.current_question_started_at = datetime.utcnow()

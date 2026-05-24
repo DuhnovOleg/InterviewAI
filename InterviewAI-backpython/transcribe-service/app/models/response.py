@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class SegmentResponse(BaseModel):
@@ -9,9 +9,10 @@ class SegmentResponse(BaseModel):
 
 class TranscribeResponse(BaseModel):
     text: str
-    language: str | None
-    duration_seconds: float | None
-    segments: list[SegmentResponse]
+    language: str | None = None
+    language_probability: float | None = None
+    duration_seconds: float | None = None
+    segments: list[SegmentResponse] = Field(default_factory=list)
     model: str
 
 
@@ -20,3 +21,4 @@ class HealthResponse(BaseModel):
     model_loaded: bool
     model_name: str
     device: str
+    engine: str

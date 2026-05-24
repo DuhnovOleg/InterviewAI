@@ -4,8 +4,10 @@ import com.example.interviewservice.entity.InterviewReportEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface InterviewReportRepository extends JpaRepository<InterviewReportEntity, UUID> {
+    Optional<InterviewReportEntity> findByInterviewSessionId(UUID interviewSessionId);
 }
